@@ -297,4 +297,74 @@ describe(": Automating the end-to-end flow of filtering products, managing cart 
       throw error;
     }
   });
+    it("Test 12: Verify cart badge shows correct item count", async () => {
+    try {
+      logger.info("Test 12: Verify cart badge count");
+      await StorePage.addBlueTShirtToCart();
+      await browser.pause(TIMEOUTS.actionDelay);
+      await StorePage.addBlackTShirtWithStripesToCart();
+      await browser.pause(TIMEOUTS.actionDelay);
+      
+      const cartCount = await StorePage.getCartItemCount();
+      expect(cartCount).toBe(2);
+      logger.info("✓ Test 12 passed");
+    } catch (error) {
+      logger.error("Test 12 failed", error as Error);
+      throw error;
+    }
+  });
+
+  it("Test 13: Verify product prices are positive", async () => {
+    try {
+      logger.info("Test 13: Verify positive prices");
+      await StorePage.addBlueTShirtToCart();
+      await browser.pause(TIMEOUTS.actionDelay);
+      await StorePage.openCart();
+      
+      await browser.waitUntil(
+        async () => await StorePage.isCartPanelVisible(),
+        { timeout: TIMEOUTS.elementWait }
+      );
+      
+      const price = await StorePage.getProductPriceInCart(TEST_DATA.products.blueTShirt.name);
+      expect(price).toBeGreaterThan(0);
+      logger.info("✓ Test 13 passed");
+    } catch (error) {
+      logger.error("Test 13 failed", error as Error);
+      throw error;
+    }
+  });
+
+it("Test 14: Verify cart item names are displayed correctly", async () => {
+  try {
+    logger.info("Test 14: Verify cart item names");
+    
+    // Add both products
+    await StorePage.addBlueTShirtToCart();
+    await browser.pause(TIMEOUTS.actionDelay);
+    await StorePage.addBlackTShirtWithStripesToCart();
+    await browser.pause(TIMEOUTS.actionDelay);
+    
+    // Open cart
+    await StorePage.openCart();
+    await browser.waitUntil(
+      async () => await StorePage.isCartPanelVisible(),
+      { timeout: TIMEOUTS.elementWait }
+    );
+    
+    // Get all item names
+    const itemNames = await StorePage.getCartItemNames();
+    logger.info(`Cart items: ${itemNames.join(", ")}`);
+    
+    // Verify both products are present
+    expect(itemNames).toContain(TEST_DATA.products.blueTShirt.name);
+    expect(itemNames).toContain(TEST_DATA.products.blackTShirtWithStripes.name);
+    expect(itemNames.length).toBe(2);
+    
+    logger.info("Test 14 passed: All item names displayed correctly");
+  } catch (error) {
+    logger.error("Test 14 failed", error as Error);
+    throw error;
+  }
+});
 });
