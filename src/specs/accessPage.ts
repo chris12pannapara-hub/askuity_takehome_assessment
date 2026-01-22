@@ -35,106 +35,115 @@ describe("Shopping Cart Test Suite", () => {
     const productCountFromText = await StorePage.getProductCount();
     const visibleProductCount = await StorePage.getVisibleProductCount();
 
-    // // Assert that the "Product(s) found" text matches the actual number of visible items
+    // Assert that the "Product(s) found" text matches the actual number of visible items
     expect(visibleProductCount).toBe(productCountFromText);
   });
 
-  // it("Test 4-5: Add Items to Cart and Open Cart", async () => {
-  //   // Add the product "Blue T-Shirt" to the cart
-  //   await StorePage.addBlueTShirtToCart();
-  //   await browser.pause(500);
+  it("Test 4-5: Add Items to Cart and Open Cart", async () => {
+    // Add the product "Blue T-Shirt" to the cart
+    await StorePage.addBlueTShirtToCart();
+    await browser.pause(500);
 
-  //   // Add the product "Black T-Shirt with white stripes" to the cart
-  //   await StorePage.addBlackTShirtWithStripesToCart();
-  //   await browser.pause(500);
+    // Add the product "Black T-Shirt with white stripes" to the cart
+    await StorePage.addBlackTShirtWithStripesToCart();
+    await browser.pause(500);
 
-  //   // Click the cart icon/menu to expand the side panel
-  //   await StorePage.openCart();
-  // });
+    // Click the cart icon/menu to expand the side panel
+    await StorePage.openCart();
+  });
 
-  // it("Test 6: Verify Initial Cart State", async () => {
-  //   // Add items first
-  //   await StorePage.addBlueTShirtToCart();
-  //   await browser.pause(300);
-  //   await StorePage.addBlackTShirtWithStripesToCart();
-  //   await browser.pause(300);
+  it("Test 6: Verify Initial Cart State", async () => {
+    // Add items first
+    await StorePage.addBlueTShirtToCart();
+    await browser.pause(300);
+    await StorePage.addBlackTShirtWithStripesToCart();
+    await browser.pause(300);
     
-  //   // Open cart
-  //   await StorePage.openCart();
+    // Open cart
+    await StorePage.openCart();
 
-  //   // Assert that the correct number of distinct items (orders) is present in the cart
-  //   const cartItemCount = await StorePage.getCartItemCount();
-  //   expect(cartItemCount).toBe(2); // Should have 2 distinct items
-  // });
+    // Assert that the correct number of distinct items (orders) is present in the cart
+    const cartItemCount = await StorePage.getDistinctCartItemCount();
+    expect(cartItemCount).toBe(2); // Should have 2 distinct items
+    browser.pause(500);
+  });
 
-  // it("Test 7-8: Update Quantity and Verify Updated State", async () => {
-  //   // Setup: Add items to cart
-  //   await StorePage.addBlueTShirtToCart();
-  //   await browser.pause(300);
-  //   await StorePage.addBlackTShirtWithStripesToCart();
-  //   await browser.pause(300);
+  it("Test 7-8: Update Quantity and Verify Updated State", async () => {
+    // Setup: Add items to cart
+    await StorePage.addBlueTShirtToCart();
+    await browser.pause(300);
+    await StorePage.addBlackTShirtWithStripesToCart();
+    await browser.pause(300);
 
-  //   // Open cart
-  //   await StorePage.openCart();
+    // Open cart
+    await StorePage.openCart();
 
-  //   // Locate the "Blue T-Shirt" in the cart and click the (+) button twice
-  //   // This increases quantity from 1 to 3
-  //   await StorePage.increaseBlueTShirtQuantity(2);
+    // Locate the "Blue T-Shirt" in the cart and click the (+) button twice
+    // This increases quantity from 1 to 3
+    const cartNames = await StorePage.getCartItemNames();
+    expect(cartNames).toContain('Blue T-Shirt');
+    await StorePage.increaseBlueTShirtQuantity(2);
 
-  //   // Assert that the total number of items in the cart has updated correctly
-  //   // Now should have 3 Blue T-Shirts + 1 Black T-Shirt = 4 total items
-  //   const updatedCartItems = await StorePage.getCartItemCount();
-  //   expect(updatedCartItems).toBeGreaterThanOrEqual(2); // At least 2 item rows
-  // });
+    // Assert that the total number of items in the cart has updated correctly
+    // Now should have 3 Blue T-Shirts + 1 Black T-Shirt = 4 total items
+    const updatedCartItems = await StorePage.getCartItemCount();
+    expect(updatedCartItems).toBeGreaterThanOrEqual(2); // Check at least 2 items since we have added more blue shirts for the test case
+  });
 
-  // it("Test 9: Validate Pricing Logic", async () => {
-  //   // Setup: Add items to cart
-  //   await StorePage.addBlueTShirtToCart();
-  //   await browser.pause(300);
-  //   await StorePage.addBlackTShirtWithStripesToCart();
-  //   await browser.pause(300);
+  it("Test 9: Validate Pricing Logic", async () => {
+    // Setup: Add items to cart
+    await StorePage.addBlueTShirtToCart();
+    await browser.pause(300);
+    await StorePage.addBlackTShirtWithStripesToCart();
+    await browser.pause(300);
 
-  //   // Open cart
-  //   await StorePage.openCart();
+    // Open cart
+    await StorePage.openCart();
 
-  //   // Increase Blue T-Shirt quantity twice (1 + 2 = 3)
-  //   await StorePage.increaseBlueTShirtQuantity(2);
+    // Increase Blue T-Shirt quantity twice (1 + 2 = 3)
+    const blueShirtNames = await StorePage.getCartItemNames();
+    expect(blueShirtNames).toContain('Blue T-Shirt');
+    await StorePage.increaseBlueTShirtQuantity(2);
+    const blueTShirtPrice = await StorePage.getProductPriceInCart('Blue T-Shirt');
+    console.log('Blue T-Shirt Price:', blueTShirtPrice);
 
-  //   // Get prices
-  //   const blueTShirtPrice = await StorePage.getProductPriceInCart("Blue T-Shirt");
-  //   const blackTShirtPrice = await StorePage.getProductPriceInCart("Black T-Shirt with white stripes");
+    // Get prices
+    const blackShirtNames = await StorePage.getCartItemNames();
+    expect(blackShirtNames).toContain('Black T-shirt with white stripes');
+    const blackTShirtPrice = await StorePage.getProductPriceInCart('Black T-shirt with white stripes');
+    console.log('Black T-Shirt with white stripes Price:', blackTShirtPrice);
 
-  //   // Calculate the expected total manually
-  //   const expectedSubtotal = (blueTShirtPrice * 3) + (blackTShirtPrice * 1);
+    // Calculate the expected total manually
+    const expectedSubtotal = (blueTShirtPrice * 3) + (blackTShirtPrice * 1);
 
-  //   // Get actual subtotal from cart
-  //   const actualSubtotal = await StorePage.getCartSubtotal();
+    // Get actual subtotal from cart
+    const actualSubtotal = await StorePage.getCartSubtotal();
 
-  //   // Assert: Verify that the "Subtotal" displayed in the cart exactly matches calculated amount
-  //   expect(actualSubtotal).toBeCloseTo(expectedSubtotal, 2); // Allow for rounding
-  // });
+    // Assert: Verify that the "Subtotal" displayed in the cart exactly matches calculated amount
+    expect(actualSubtotal).toBeCloseTo(expectedSubtotal, 2); // Allow for rounding
+  });
 
-  // it("Test 10-11: Clear Cart and Verify Empty State", async () => {
-  //   // Setup: Add items to cart
-  //   await StorePage.addBlueTShirtToCart();
-  //   await browser.pause(300);
-  //   await StorePage.addBlackTShirtWithStripesToCart();
-  //   await browser.pause(300);
+  it("Test 10-11: Clear Cart and Verify Empty State", async () => {
+    // Setup: Add items to cart
+    await StorePage.addBlueTShirtToCart();
+    await browser.pause(300);
+    await StorePage.addBlackTShirtWithStripesToCart();
+    await browser.pause(300);
 
-  //   // Open cart
-  //   await StorePage.openCart();
+    // Open cart
+    await StorePage.openCart();
 
-  //   // Remove all items from the cart
-  //   await StorePage.removeAllItems();
-  //   await browser.pause(500);
+    // Remove all items from the cart
+    await StorePage.removeAllItems();
+    await browser.pause(500);
 
-  //   // Verify empty state
-  //   // Assert that the Subtotal is 0 or not displayed
-  //   const subtotalAmount = await StorePage.getCartSubtotalAmount();
-  //   expect(subtotalAmount).toMatch(/\$0\.00|0\.00/); // Should show $0.00 or 0.00
+    // Verify empty state
+    // Assert that the Subtotal is 0 or not displayed
+    const subtotalAmount = await StorePage.getCartSubtotalAmount();
+    expect(subtotalAmount).toMatch(/\$0\.00|0\.00/); // Should show $0.00 or 0.00
 
-  //   // Assert that the "Cart is empty" message is displayed
-  //   const isCartEmpty = await StorePage.isCartEmpty();
-  //   expect(isCartEmpty).toBe(true);
-  // });
+    // Assert that the "Cart is empty" message is displayed
+    const isCartEmpty = await StorePage.isCartEmpty();
+    expect(isCartEmpty).toBe(true);
+  });
 });
