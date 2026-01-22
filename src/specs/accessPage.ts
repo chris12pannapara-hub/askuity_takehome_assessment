@@ -1,149 +1,300 @@
 import { expect } from "@wdio/globals";
 import StorePage from "../pages/storePage";
+import { TIMEOUTS, TEST_DATA } from "../config/testData";
+import { logger } from "../utils/logger";
 
-describe("Automation Challenge", () => {
-  it("Open WebPage and validate title", async () => {
-    await StorePage.open();
-    expect(await browser.getTitle()).toStrictEqual(
-      "Typescript React Shopping cart"
-    );
-  });
-});
-
-describe("Shopping Cart Test Suite", () => {
+describe(": Automating the end-to-end flow of filtering products, managing cart quantities, and verifying pricing logic", () => {
   beforeEach(async () => {
-    await StorePage.open();
+    try {
+      logger.info("=== Test Setup: Opening store page ===");
+      await StorePage.open();
+      logger.info("Store page opened successfully");
+    } catch (error) {
+      logger.error("Failed to open store page in beforeEach", error as Error);
+      throw error;
+    }
   });
 
-  it("Test 1: Navigate to the Application", async () => {
-    // Open the webpage
-    expect(await browser.getTitle()).toBe("Typescript React Shopping cart");
+  const setupCartWithItems = async () => {
+    try {
+      logger.info("Setting up cart with Blue T-Shirt and Black T-Shirt with white stripes");
+      
+      //Adding both products to cart
+      await StorePage.addBlueTShirtToCart();
+      await browser.pause(TIMEOUTS.actionDelay);
+      await StorePage.addBlackTShirtWithStripesToCart();
+      await browser.pause(TIMEOUTS.actionDelay);
+      logger.debug("Both products added to cart");
+      await StorePage.openCart();
+      logger.debug("Cart opened");
+      await browser.waitUntil(
+        async () => await StorePage.isCartPanelVisible(),
+        {
+          timeout: TIMEOUTS.elementWait,
+          timeoutMsg: 'Cart panel did not become visible'
+        }
+      );
+      logger.info("Cart setup completed successfully");
+    } catch (error) {
+      logger.error("Failed to setup cart with items", error as Error);
+      throw error;
+    }
+  };
+
+  const setupCartWithIncreasedQuantity = async () => {
+    try {
+      logger.info("Setting up cart with increased Blue T-Shirt quantity");
+      
+      //First main setup for the cart with both items(taking blue and black t-shirt for example)
+      await setupCartWithItems();
+      logger.debug("Cart setup with items completed");
+      
+      //Verifying blue t-shirt is in cart
+      const cartNames = await StorePage.getCartItemNames();
+      expect(cartNames).toContain('Blue T-Shirt');
+      logger.debug("Verified Blue T-Shirt exists in cart");
+      await StorePage.increaseBlueTShirtQuantity(2);
+      logger.info("Blue T-Shirt quantity increased by 2");
+      await browser.waitUntil(
+        async () => {
+          const count = await StorePage.getCartItemCount();
+          logger.debug(`Waiting for cart update - Current count: ${count}`);
+          return count >= 3; //Checking for at least 3 items in the cart
+        },
+        {
+          timeout: TIMEOUTS.elementWait,
+          timeoutMsg: 'Cart quantity did not update as expected'
+        }
+      );
+      logger.info("Cart quantity updated successfully");
+    } catch (error) {
+      logger.error("Failed to setup cart with increased quantity", error as Error);
+      throw error;
+    }
+  };
+
+  //                                                ============= TEST CASES =============
+
+  it("Test 1: Navigate to the Shopping Application", async () => {
+    try {
+      logger.info("Test 1 started: Navigating to Shopping Application");
+      
+      const pageTitle = await browser.getTitle();
+      logger.debug(`Page title retrieved: "${pageTitle}"`);
+      
+      expect(pageTitle).toBe("Typescript React Shopping cart");
+      logger.info("Test 1 passed: Page title matches expected value");
+    } catch (error) {
+      logger.error("Test 1 failed", error as Error);
+      throw error;
+    }
   });
 
   it("Test 2-3: Filter by Size and Verify Results", async () => {
-    // Locate the "Sizes" filter menu
-    expect(await StorePage.checkSizeFilter()).toBe("Sizes:");
-    
-    // Select 'XS' and 'ML' sizes
-    await StorePage.selectSizeXS();
-    await StorePage.selectSizeML();
+    try {
+      logger.info("Test 2-3 started: Filter by Size and Verify Results");
+      
+      // Locate the "Sizes" filter menu
+      const sizeFilterText = await StorePage.checkSizeFilter();
+      logger.debug(`Size filter text: "${sizeFilterText}"`);
+      expect(sizeFilterText).toBe("Sizes:");
+      
+      // Select 'XS' and 'ML' sizes
+      logger.info("Selecting size filters: XS and ML");
+      await StorePage.selectSizeXS();
+      logger.debug("Selected size XS");
+      
+      await StorePage.selectSizeML();
+      logger.debug("Selected size ML");
 
-    // Wait for results to update
-    await browser.pause(1000);
+      // Smart wait: Wait for filter results to update
+      logger.info("Waiting for filter results to update...");
+      await browser.waitUntil(
+        async () => {
+          const productCount = await StorePage.getProductCount();
+          const visibleCount = await StorePage.getVisibleProductCount();
+          logger.debug(`Filter check - Expected: ${productCount}, Visible: ${visibleCount}`);
+          return productCount === visibleCount;
+        },
+        {
+          timeout: TIMEOUTS.elementWait,
+          timeoutMsg: 'Filter results did not update within expected time'
+        }
+      );
+      logger.info("✓ Filter results updated successfully");
 
-    // Count the number of products displayed on the grid
-    const productCountFromText = await StorePage.getProductCount();
-    const visibleProductCount = await StorePage.getVisibleProductCount();
+      // Count the number of products displayed on the grid
+      const productCountFromText = await StorePage.getProductCount();
+      const visibleProductCount = await StorePage.getVisibleProductCount();
+      
+      logger.debug(`Product count from text: ${productCountFromText}, Visible: ${visibleProductCount}`);
 
-    // Assert that the "Product(s) found" text matches the actual number of visible items
-    expect(visibleProductCount).toBe(productCountFromText);
+      // Assert that the Products found text matches the actual number of visible items
+      expect(visibleProductCount).toBe(productCountFromText);
+      logger.info("✓ Test 2-3 passed: Filter results verified");
+    } catch (error) {
+      logger.error("Test 2-3 failed", error as Error);
+      throw error;
+    }
   });
 
   it("Test 4-5: Add Items to Cart and Open Cart", async () => {
-    // Add the product "Blue T-Shirt" to the cart
-    await StorePage.addBlueTShirtToCart();
-    await browser.pause(500);
-
-    // Add the product "Black T-Shirt with white stripes" to the cart
-    await StorePage.addBlackTShirtWithStripesToCart();
-    await browser.pause(500);
-
-    // Click the cart icon/menu to expand the side panel
-    await StorePage.openCart();
+    try {
+      logger.info("Test 4-5 started: Add Items to Cart and Open Cart");
+      await setupCartWithItems();
+      
+      //Verifying cart panel is actually open
+      const isCartOpen = await StorePage.isCartPanelVisible();
+      logger.debug(`Cart panel visible: ${isCartOpen}`);
+      expect(isCartOpen).toBe(true);
+      
+      logger.info("Test 4-5 passed: Items added and cart opened successfully");
+    } catch (error) {
+      logger.error("Test 4-5 failed", error as Error);
+      throw error;
+    }
   });
 
   it("Test 6: Verify Initial Cart State", async () => {
-    // Add items first
-    await StorePage.addBlueTShirtToCart();
-    await browser.pause(300);
-    await StorePage.addBlackTShirtWithStripesToCart();
-    await browser.pause(300);
-    
-    // Open cart
-    await StorePage.openCart();
+    try {
+      logger.info("Test 6 started: Verify Initial Cart State");
+      await setupCartWithItems();
 
-    // Assert that the correct number of distinct items (orders) is present in the cart
-    const cartItemCount = await StorePage.getDistinctCartItemCount();
-    expect(cartItemCount).toBe(2); // Should have 2 distinct items
-    browser.pause(500);
+      //Asserting that the correct number of distinct items is present in the cart
+      const cartItemCount = await StorePage.getDistinctCartItemCount();
+      logger.info(`Distinct cart items count: ${cartItemCount}`);
+      
+      expect(cartItemCount).toBe(TEST_DATA.cart.expectedDistinctItems); //Should only have 2 distinct items since we added 2 different products
+      
+      logger.info("Test 6 passed: Cart has correct number of distinct items");
+    } catch (error) {
+      logger.error("Test 6 failed", error as Error);
+      throw error;
+    }
   });
 
-  it("Test 7-8: Update Quantity and Verify Updated State", async () => {
-    // Setup: Add items to cart
-    await StorePage.addBlueTShirtToCart();
-    await browser.pause(300);
-    await StorePage.addBlackTShirtWithStripesToCart();
-    await browser.pause(300);
+  it("Test 7 & 8: Update Quantity and Verify Updated State", async () => {
+    try {
+      logger.info("Test 7 & 8 started: Update Quantity and Verify Updated State");
+      await setupCartWithIncreasedQuantity();
 
-    // Open cart
-    await StorePage.openCart();
+      //Verifying Blue T-Shirt is still in cart
+      const cartNames = await StorePage.getCartItemNames();
+      logger.debug(`Cart items: ${cartNames.join(', ')}`);
+      expect(cartNames).toContain('Blue T-Shirt');
+      logger.debug("Verified Blue T-Shirt exists in cart after quantity increase");
 
-    // Locate the "Blue T-Shirt" in the cart and click the (+) button twice
-    // This increases quantity from 1 to 3
-    const cartNames = await StorePage.getCartItemNames();
-    expect(cartNames).toContain('Blue T-Shirt');
-    await StorePage.increaseBlueTShirtQuantity(2);
-
-    // Assert that the total number of items in the cart has updated correctly
-    // Now should have 3 Blue T-Shirts + 1 Black T-Shirt = 4 total items
-    const updatedCartItems = await StorePage.getCartItemCount();
-    expect(updatedCartItems).toBeGreaterThanOrEqual(2); // Check at least 2 items since we have added more blue shirts for the test case
+      //Asserting that the total number of items in the cart has updated correctly
+      const updatedCartItems = await StorePage.getCartItemCount();
+      logger.info(`Updated cart items count: ${updatedCartItems}`);
+      
+      //Should have at least 3 Blue T-Shirts (1 initial + 2 increases)
+      expect(updatedCartItems).toBeGreaterThanOrEqual(TEST_DATA.cart.blueTShirtFinalQty);
+      logger.info("Test 7 & 8 passed: Quantity updated successfully");
+    } catch (error) {
+      logger.error("Test 7 & 8 failed", error as Error);
+      throw error;
+    }
   });
 
   it("Test 9: Validate Pricing Logic", async () => {
-    // Setup: Add items to cart
-    await StorePage.addBlueTShirtToCart();
-    await browser.pause(300);
-    await StorePage.addBlackTShirtWithStripesToCart();
-    await browser.pause(300);
+    try {
+      logger.info("Test 9 started: Validate Pricing Logic");
+      await setupCartWithIncreasedQuantity();
 
-    // Open cart
-    await StorePage.openCart();
+      //Getting Blue T-Shirt price
+      let blueTShirtPrice: number;
+      try {
+        blueTShirtPrice = await StorePage.getProductPriceInCart(TEST_DATA.products.blueTShirt.name);
+        logger.info(`Retrieved Blue T-Shirt price: $${blueTShirtPrice}`);
+      } catch (error) {
+        logger.error("Failed to retrieve Blue T-Shirt price", error as Error);
+        throw new Error(`Could not find Blue T-Shirt price in cart: ${error}`);
+      }
 
-    // Increase Blue T-Shirt quantity twice (1 + 2 = 3)
-    const blueShirtNames = await StorePage.getCartItemNames();
-    expect(blueShirtNames).toContain('Blue T-Shirt');
-    await StorePage.increaseBlueTShirtQuantity(2);
-    const blueTShirtPrice = await StorePage.getProductPriceInCart('Blue T-Shirt');
-    console.log('Blue T-Shirt Price:', blueTShirtPrice);
+      //Getting Black T-Shirt price
+      let blackTShirtPrice: number;
+      try {
+        blackTShirtPrice = await StorePage.getProductPriceInCart(TEST_DATA.products.blackTShirtWithStripes.name);
+        logger.info(`Retrieved Black T-Shirt price: $${blackTShirtPrice}`);
+      } catch (error) {
+        logger.error("Failed to retrieve Black T-Shirt price", error as Error);
+        throw new Error(`Could not find Black T-Shirt price in cart: ${error}`);
+      }
 
-    // Get prices
-    const blackShirtNames = await StorePage.getCartItemNames();
-    expect(blackShirtNames).toContain('Black T-shirt with white stripes');
-    const blackTShirtPrice = await StorePage.getProductPriceInCart('Black T-shirt with white stripes');
-    console.log('Black T-Shirt with white stripes Price:', blackTShirtPrice);
+      //Calculating the expected subtotal
+      const expectedSubtotal = (blueTShirtPrice * TEST_DATA.cart.blueTShirtFinalQty) +  (blackTShirtPrice * TEST_DATA.cart.blackTShirtFinalQty);
+      
+      logger.debug("Pricing calculation", {
+        blueTShirtQty: TEST_DATA.cart.blueTShirtFinalQty,
+        blueTShirtPrice: blueTShirtPrice,
+        blackTShirtQty: TEST_DATA.cart.blackTShirtFinalQty,
+        blackTShirtPrice: blackTShirtPrice,
+        expectedSubtotal: expectedSubtotal
+      });
 
-    // Calculate the expected total manually
-    const expectedSubtotal = (blueTShirtPrice * 3) + (blackTShirtPrice * 1);
+      //Getting actual subtotal from cart
+      let actualSubtotal: number;
+      try {
+        actualSubtotal = await StorePage.getCartSubtotal();
+        logger.info(`Retrieved cart subtotal: $${actualSubtotal}`);
+      } catch (error) {
+        logger.error("Failed to retrieve cart subtotal", error as Error);
+        throw new Error(`Could not find cart subtotal: ${error}`);
+      }
 
-    // Get actual subtotal from cart
-    const actualSubtotal = await StorePage.getCartSubtotal();
-
-    // Assert: Verify that the "Subtotal" displayed in the cart exactly matches calculated amount
-    expect(actualSubtotal).toBeCloseTo(expectedSubtotal, 2); // Allow for rounding
+      //Verifying that the Subtotal displayed in the cart exactly matches calculated amount
+      logger.info(`Validating pricing: Expected $${expectedSubtotal} vs Actual $${actualSubtotal}`);
+      expect(actualSubtotal).toBeCloseTo(expectedSubtotal, 2); // Allowing for rounding of amount to be safe
+      logger.info("Test 9 passed: Pricing validation successful");
+    } catch (error) {
+      logger.error("Test 9 failed", error as Error);
+      throw error;
+    }
   });
 
-  it("Test 10-11: Clear Cart and Verify Empty State", async () => {
-    // Setup: Add items to cart
-    await StorePage.addBlueTShirtToCart();
-    await browser.pause(300);
-    await StorePage.addBlackTShirtWithStripesToCart();
-    await browser.pause(300);
+  it("Test 10 & 11: Clear Cart and Verify Empty State", async () => {
+    try {
+      logger.info("Test 10 & 11 started: Clear Cart and Verify Empty State");
+      await setupCartWithItems();
+      logger.info("Removing all items from cart");
+      await StorePage.removeAllItems();
+      logger.info("Waiting for cart to become empty...");
+      await browser.waitUntil(
+        async () => {
+          const isEmpty = await StorePage.isCartEmpty();
+          logger.debug(`Cart empty state check: ${isEmpty}`);
+          return isEmpty;
+        },
+        {
+          timeout: TIMEOUTS.elementWait,
+          timeoutMsg: 'Cart did not empty within expected time'
+        }
+      );
+      logger.info("Cart is now empty");
 
-    // Open cart
-    await StorePage.openCart();
+      //Verifying so to check that the subtotal shows $0.00
+      let subtotalAmount: string;
+      try {
+        subtotalAmount = await StorePage.getCartSubtotalAmount();
+        logger.debug(`Cart subtotal amount: ${subtotalAmount}`);
+      } catch (error) {
+        logger.error("Failed to retrieve cart subtotal amount", error as Error);
+        throw new Error(`Could not find cart subtotal: ${error}`);
+      }
 
-    // Remove all items from the cart
-    await StorePage.removeAllItems();
-    await browser.pause(500);
+      //Asserting to make sure that the Subtotal is 0
+      expect(subtotalAmount).toMatch(TEST_DATA.assertions.emptyCartPattern);
+      logger.info("Subtotal verified as $0.00");
 
-    // Verify empty state
-    // Assert that the Subtotal is 0 or not displayed
-    const subtotalAmount = await StorePage.getCartSubtotalAmount();
-    expect(subtotalAmount).toMatch(/\$0\.00|0\.00/); // Should show $0.00 or 0.00
-
-    // Assert that the "Cart is empty" message is displayed
-    const isCartEmpty = await StorePage.isCartEmpty();
-    expect(isCartEmpty).toBe(true);
+      //Making sure that the cart is empty
+      const isCartEmpty = await StorePage.isCartEmpty();
+      logger.debug(`Final cart empty state: ${isCartEmpty}`);
+      expect(isCartEmpty).toBe(true);
+      logger.info("Test 10 & 11 passed: Cart successfully cleared and empty state verified");
+    } catch (error) {
+      logger.error("Test 10 & 11 failed", error as Error);
+      throw error;
+    }
   });
 });

@@ -1,7 +1,7 @@
 export const storePageSelectors = {
-  sizeFilterMenu: "//*[@id='root']/div/main/div/div[1]/h4",
-  sizeXS: "//*[@id='root']/div/main/div/div[1]/div[1]",
-  sizeML: "//*[@id='root']/div/main/div/div[1]/div[4]",
+  sizeFilterMenu: "h4.sc-bj2vay-2",
+  sizeXS: "input[data-testid='checkbox'][value='XS'] + .checkmark",
+  sizeML: "input[data-testid='checkbox'][value='ML'] + .checkmark",
   productGrid: "div.sc-uhudcz-0 > div[tabindex='1']",
   productCount: "#root > div > main > main > main",
   addblueTShirtbtn: "//*[@id='root']/div/main/main/div/div[6]/button",
@@ -11,11 +11,9 @@ export const storePageSelectors = {
   cartItemsDistinct: "div.sc-7th5t8-0 > div.sc-11uohgb-0",
   cartItems: "//*[@id='root']/div/div/div/div[1]/div/div",
   cartItemsname: "div.sc-7th5t8-0 div.sc-11uohgb-1 p.sc-11uohgb-2",
-  blueTShirtInCart: "//span[contains(text(), 'Blue T-Shirt')]",
   productPrice:"div.sc-11uohgb-0 div.sc-11uohgb-4 p",
   increaseQuantityButton: "//*[@id='root']/div/div/div/div[2]/div[1]/div[2]/div/button[2]",
   cartSubtotal: "//*[@id='root']/div/div/div/div[3]/div/p[1]",
   removeItemButton: "button[title='remove product from cart']",
-  clearCartButton: "//button[@data-testid='clear-cart'] | button:has-text('Clear Cart')",
   emptyCartMessage: "//*[@id='root']/div/div/div/div[2]/p",
 };
