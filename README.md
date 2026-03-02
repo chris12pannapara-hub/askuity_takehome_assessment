@@ -15,7 +15,7 @@ Before you begin, ensure you have the following installed:
 1.  **Clone the repository:**
 
     ```bash
-    git clone https://github.com/chris12pannapara-hub/askuity_takehome_assessment.git
+    git clone https://github.com/chris12pannapara-hub/QA_UI_Automation.git
     ```
 
 2.  **Navigate to the project directory:**
