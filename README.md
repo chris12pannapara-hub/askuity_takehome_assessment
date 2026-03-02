@@ -1,7 +1,7 @@
 # WebdriverIO E2E Test Framework
-# Askuity Automation Testing Exercise
+# Automation Testing Exercise
 
-This project contains end-to-end tests written using WebdriverIO for Askuity Automation Testing exercise
+This project contains end-to-end tests written using WebdriverIO for Automation Testing exercise
 
 ## Prerequisites
 
